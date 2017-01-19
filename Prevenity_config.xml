@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Sysmon schemaversion="3.20">
+  <!--Tworzenie hash dla SHA256 i IMPHASH-->
+  <HashAlgorithms>SHA256,IMPHASH</HashAlgorithms>
+  <EventFiltering>
+    <!--Nie logujemy sterownikow-->
+    <DriverLoad onmatch="include"></DriverLoad>
+    <!--logujemy ładowane obrazy plikow wykonywalnych ktore nie sa podpisane cyfrowo-->
+    <ImageLoad onmatch="exclude">
+      <Signature condition="is">Microsoft Windows</Signature>
+      <Signature condition="is">Microsoft Corporation</Signature>
+    </ImageLoad>
+    <!--obrazy plikow ladowane z katalogu Users -->
+    <ImageLoad onmatch="include">
+      <Image condition="contains">C:\Users</Image>
+    </ImageLoad>
+    <!--Logujemy wszystkie wywolania CreateRemoteThread-->
+    <CreateRemoteThread onmatch="exclude"></CreateRemoteThread>
+    <!--Logujemy wszystkie raw disk access -->
+    <RawAccessRead onmatch="exclude"></RawAccessRead>
+    <!--Nie logujemy file modified creation time -->
+    <FileCreateTime onmatch="include" />
+    <!--Logujemy dostep do explorer, lsass i winlogon -->
+    <ProcessAccess onmatch="include">
+      <TargetImage condition="is">C:\Windows\system32\lsass.exe</TargetImage>
+      <TargetImage condition="is">C:\Windows\system32\winlogon.exe</TargetImage>
+      <TargetImage condition="is">C:\Windows\system32\explorer.exe</TargetImage>
+    </ProcessAccess>
+    <!--Kilka wykluczen-->
+    <ProcessAccess onmatch="exclude">
+      <SourceImage condition="contains">procexp64.exe</SourceImage>
+      <SourceImage condition="is">C:\WINDOWS\System32\Taskmgr.exe</SourceImage>
+      <SourceImage condition="is">C:\WINDOWS\System32\VBoxService.exe</SourceImage>
+    </ProcessAccess>
+    <!--Polaczenia sieciowe wybranych procesow-->
+    <NetworkConnect onmatch="include">
+      <Image condition="contains">chrome.exe</Image>
+      <Image condition="contains">iexplore.exe</Image>
+      <Image condition="contains">firefox.exe</Image>
+      <Image condition="contains">MicrosoftEdgeCP.exe</Image>
+      <Image condition="contains">MicrosoftEdge.exe</Image>
+      <Image condition="contains">explorer.exe</Image>
+    </NetworkConnect>
+    <!--Logowanie uruchamianych procesow z katalogu Users-->
+    <ProcessCreate onmatch="include">
+      <Image condition="contains">Users</Image>
+    </ProcessCreate>
+    <!--Nie logujemy zamykanych procesow-->
+    <ProcessTerminate onmatch="include" />
+    <!-- tworzone pliki exe bez C:\Windows-->
+    <FileCreate onmatch="include">
+      <TargetFilename condition="end with">exe</TargetFilename>
+    </FileCreate>
+    <FileCreate onmatch="exclude">
+      <TargetFilename condition="begin with">C:\Windows</TargetFilename>
+    </FileCreate>
+    <!--Modyfikowane rejestry RUN (HKCU i HKLM za jednym zamachem)-->
+    <RegistryEvent onmatch="include">
+      <TargetObject condition="contains">\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</TargetObject>
+    </RegistryEvent>
+  </EventFiltering>
+</Sysmon>
